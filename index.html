@@ -63,15 +63,15 @@
     .week-date { font-size: 11px; color: var(--text-light); }
 
     .tbl-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 11px; }
-    table th { padding: 6px 8px; text-align: center; font-size: 10px; font-weight: 500; color: var(--text-light); border-bottom: 1px solid var(--border); white-space: nowrap; }
-    table th.lbl { text-align: left; width: 76px; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
+    table th { padding: 6px 4px; text-align: center; font-size: 10px; font-weight: 500; color: var(--text-light); border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; width: 72px; }
+    table th.lbl { text-align: left; width: 70px; }
+    table th.sub { background: var(--sub-bg); color: var(--sub-text); font-weight: 600; width: 76px; }
     table th.sat { background: var(--blue-light); color: var(--blue-text); font-weight: 600; }
     table th.off { background: var(--gray-bg); color: var(--gray-text); }
     table th.oth { background: var(--off-bg); color: #ddd; }
-    table th.sub { background: var(--sub-bg); color: var(--sub-text); font-weight: 600; }
-    table td { padding: 8px 8px; text-align: center; white-space: nowrap; }
-    table td.lbl { text-align: left; font-size: 11px; font-weight: 600; }
+    table td { padding: 8px 4px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    table td.lbl { text-align: left; font-size: 11px; font-weight: 600; padding-left: 8px; }
     table td.ink { color: var(--blue); } table td.sol { color: var(--green); }
     table td.sat-c { background: var(--blue-light); font-weight: 600; }
     table td.off-c { background: var(--gray-bg); color: var(--gray-text); }
