@@ -137,12 +137,14 @@
     /* ── INPUT MODAL ── */
     .field { margin-bottom: 1rem; }
     .field:last-child { margin-bottom: 0; }
-    .field-label { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: block; }
+    .field-label { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: block; white-space: nowrap; }
     .field input, .field select { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); font-size: 13px; color: var(--text); font-family: inherit; }
     .field input:focus, .field select:focus { outline: none; border-color: var(--blue); }
-    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .field-hint { font-size: 10px; color: var(--text-light); margin-top: 4px; }
     .date-display { font-size: 14px; font-weight: 600; color: var(--blue); background: var(--blue-light); padding: 8px 14px; border-radius: 8px; text-align: center; margin-bottom: 1rem; }
+    .qty-label { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+    .qty-unit { font-size: 10px; color: var(--text-light); font-weight: 400; }
 
     /* ── HOLIDAY MODAL ── */
     .cal-nav-bar { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); }
@@ -240,20 +242,19 @@
     <div class="modal-body">
       <div class="field">
         <label class="field-label">日期</label>
-        <input type="date" id="input-date" />
-        <div class="field-hint">請選擇出貨日期</div>
+        <input type="date" id="input-date" style="font-size:14px; font-weight:500;" />
       </div>
       <div class="field-row">
-        <div class="field">
-          <label class="field-label">INK 出貨量（公斤）</label>
-          <input type="number" id="input-ink" placeholder="0" min="0" />
+        <div class="field" style="margin-bottom:0;">
+          <div class="qty-label"><span class="dot dot-ink"></span>INK <span class="qty-unit">公斤</span></div>
+          <input type="number" id="input-ink" placeholder="0" min="0" style="font-size:16px; font-weight:500;" />
         </div>
-        <div class="field">
-          <label class="field-label">SOLVENT 出貨量（公斤）</label>
-          <input type="number" id="input-sol" placeholder="0" min="0" />
+        <div class="field" style="margin-bottom:0;">
+          <div class="qty-label"><span class="dot dot-sol"></span>SOLVENT <span class="qty-unit">公斤</span></div>
+          <input type="number" id="input-sol" placeholder="0" min="0" style="font-size:16px; font-weight:500;" />
         </div>
       </div>
-      <div class="field">
+      <div class="field" style="margin-top:1rem;">
         <label class="field-label">備註（選填）</label>
         <input type="text" id="input-note" placeholder="例：特殊訂單" />
       </div>
