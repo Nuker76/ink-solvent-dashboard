@@ -63,22 +63,23 @@
     .week-date { font-size: 11px; color: var(--text-light); }
 
     .tbl-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
-    table th { padding: 6px 4px; text-align: center; font-size: 10px; font-weight: 500; color: var(--text-light); border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; width: 72px; }
-    table th.lbl { text-align: left; width: 70px; }
-    table th.sub { background: var(--sub-bg); color: var(--sub-text); font-weight: 600; width: 76px; }
+    /* 固定 7 欄：lbl(70) + Mon~Sun 各72px x7 + sub(80) = 70+504+80 = 654px */
+    table { width: 654px; min-width: 654px; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
+    table th { padding: 6px 2px; text-align: center; font-size: 10px; font-weight: 500; color: var(--text-light); border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; width: 72px; }
+    table th.lbl { text-align: left; width: 70px; padding-left: 8px; }
+    table th.sub { background: var(--sub-bg); color: var(--sub-text); font-weight: 600; width: 80px; }
     table th.sat { background: var(--blue-light); color: var(--blue-text); font-weight: 600; }
     table th.off { background: var(--gray-bg); color: var(--gray-text); }
     table th.oth { background: var(--off-bg); color: #ddd; }
-    table td { padding: 8px 4px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    table td.lbl { text-align: left; font-size: 11px; font-weight: 600; padding-left: 8px; }
+    table td { padding: 8px 2px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 72px; }
+    table td.lbl { text-align: left; font-size: 11px; font-weight: 600; padding-left: 8px; width: 70px; }
     table td.ink { color: var(--blue); } table td.sol { color: var(--green); }
     table td.sat-c { background: var(--blue-light); font-weight: 600; }
     table td.off-c { background: var(--gray-bg); color: var(--gray-text); }
     table td.oth-c { background: var(--off-bg); color: #ddd; }
     table td.empty { color: var(--text-light); }
-    table td.sub-ink { background: #E6F1FB; font-weight: 600; color: var(--blue-text); }
-    table td.sub-sol { background: var(--green-light); font-weight: 600; color: var(--green-text); }
+    table td.sub-ink { background: #E6F1FB; font-weight: 600; color: var(--blue-text); width: 80px; }
+    table td.sub-sol { background: var(--green-light); font-weight: 600; color: var(--green-text); width: 80px; }
     table tbody tr { border-bottom: 1px solid var(--border); }
     table tbody tr:last-child { border-bottom: none; }
 
@@ -101,9 +102,10 @@
     .up { color: #0F6E56; } .down { color: #A32D2D; }
     .b-up { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: var(--green-light); color: var(--green-text); margin-left: 6px; }
     .b-dn { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: var(--red-light); color: var(--red-text); margin-left: 6px; }
-    .cmp-table th { padding: 7px 10px; text-align: right; font-size: 10px; font-weight: 500; color: var(--text-light); border-bottom: 1px solid var(--border); }
+    .cmp-table { width: 100% !important; min-width: 100% !important; table-layout: auto !important; }
+    .cmp-table th { padding: 7px 10px; text-align: right; font-size: 10px; font-weight: 500; color: var(--text-light); border-bottom: 1px solid var(--border); width: auto !important; }
     .cmp-table th:first-child { text-align: left; }
-    .cmp-table td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+    .cmp-table td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--border); width: auto !important; }
     .cmp-table td:first-child { text-align: left; font-size: 11px; font-weight: 600; color: var(--text-muted); }
     .cmp-table tr:last-child td { border-bottom: none; }
     .cmp-table .total-row td { background: var(--week-bg); font-weight: 600; }
