@@ -63,23 +63,23 @@
     .week-date { font-size: 11px; color: var(--text-light); }
 
     .tbl-wrap { overflow-x: auto; }
-    /* 固定 7 欄：lbl(70) + Mon~Sun 各72px x7 + sub(80) = 70+504+80 = 654px */
-    table { width: 654px; min-width: 654px; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
-    table th { padding: 6px 2px; text-align: center; font-size: 10px; font-weight: 500; color: var(--text-light); border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; width: 72px; }
-    table th.lbl { text-align: left; width: 70px; padding-left: 8px; }
-    table th.sub { background: var(--sub-bg); color: var(--sub-text); font-weight: 600; width: 80px; }
+    /* 固定 9 欄：lbl(11%) + Mon~Sun各11%x7(77%) + sub(12%) = 100% */
+    table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+    table th { padding: 6px 4px; text-align: center; font-size: 10px; font-weight: 500; color: var(--text-light); border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; }
+    table th.lbl { text-align: left; padding-left: 10px; }
+    table th.sub { background: var(--sub-bg); color: var(--sub-text); font-weight: 600; }
     table th.sat { background: var(--blue-light); color: var(--blue-text); font-weight: 600; }
     table th.off { background: var(--gray-bg); color: var(--gray-text); }
     table th.oth { background: var(--off-bg); color: #ddd; }
-    table td { padding: 8px 2px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 72px; }
-    table td.lbl { text-align: left; font-size: 11px; font-weight: 600; padding-left: 8px; width: 70px; }
+    table td { padding: 9px 4px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    table td.lbl { text-align: left; font-size: 12px; font-weight: 600; padding-left: 10px; }
     table td.ink { color: var(--blue); } table td.sol { color: var(--green); }
     table td.sat-c { background: var(--blue-light); font-weight: 600; }
     table td.off-c { background: var(--gray-bg); color: var(--gray-text); }
     table td.oth-c { background: var(--off-bg); color: #ddd; }
     table td.empty { color: var(--text-light); }
-    table td.sub-ink { background: #E6F1FB; font-weight: 600; color: var(--blue-text); width: 80px; }
-    table td.sub-sol { background: var(--green-light); font-weight: 600; color: var(--green-text); width: 80px; }
+    table td.sub-ink { background: #E6F1FB; font-weight: 600; color: var(--blue-text); }
+    table td.sub-sol { background: var(--green-light); font-weight: 600; color: var(--green-text); }
     table tbody tr { border-bottom: 1px solid var(--border); }
     table tbody tr:last-child { border-bottom: none; }
 
@@ -550,11 +550,11 @@ function renderDashboard() {
         return `<td class="${val?'sol':'empty'}" ${click}>${val?fmt(val):'—'}</td>`;
       }).join('');
       const colgroup = `<colgroup>
-        <col style="width:70px">
-        <col style="width:72px"><col style="width:72px"><col style="width:72px">
-        <col style="width:72px"><col style="width:72px"><col style="width:72px">
-        <col style="width:72px">
-        <col style="width:80px">
+        <col style="width:11%">
+        <col style="width:11%"><col style="width:11%"><col style="width:11%">
+        <col style="width:11%"><col style="width:11%"><col style="width:11%">
+        <col style="width:11%">
+        <col style="width:12%">
       </colgroup>`;
       return `<div class="week-bar ${wi>0?'week-sep':''}"><span class="week-tag">第 ${wi+1} 週</span><span class="week-date">${range}</span></div>
       <div class="tbl-wrap"><table>${colgroup}<thead><tr><th class="lbl">類別</th>${headers}<th class="sub">週計</th></tr></thead>
