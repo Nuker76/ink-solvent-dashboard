@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>油墨溶劑出貨 Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #185FA5; --blue-light: #dbeafe; --blue-text: #0C447C;
+      --green: #1D9E75; --green-light: #E1F5EE; --green-text: #085041;
+      --amber: #BA7517; --amber-light: #FAEEDA; --amber-text: #633806;
+      --red-light: #FCEBEB; --red-text: #791F1F;
+      --gray-bg: #f0f0f0; --gray-text: #bbb; --off-bg: #f5f5f5;
+      --border: #e5e7eb; --text: #111827; --text-muted: #6b7280; --text-light: #9ca3af;
+      --bg: #f9fafb; --card: #ffffff; --week-bg: #f3f4f6;
+      --sub-bg: #F1EFE8; --sub-text: #5F5E5A;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+    .container { max-width: 960px; margin: 0 auto; padding: 1rem; }
+
+    .alert { background: var(--amber-light); border: 1px solid #EF9F27; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .alert-left { display: flex; align-items: center; gap: 10px; }
+    .alert-icon { font-size: 18px; }
+    .alert-text { font-size: 12px; color: var(--amber-text); }
+    .alert-text strong { display: block; font-size: 13px; margin-bottom: 2px; }
+    .alert-btn { font-size: 11px; padding: 5px 12px; border-radius: 8px; background: var(--amber); color: var(--amber-light); border: none; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+
+    .header { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; }
+    .month-nav { display: flex; align-items: center; gap: 14px; }
+    .nav-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+    .nav-btn:hover { background: #e5e7eb; }
+    .month-title { font-size: 18px; font-weight: 600; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    .badge { font-size: 11px; padding: 3px 10px; border-radius: 99px; background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+    .setting-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+    .setting-btn:hover { background: #e5e7eb; }
+
+    .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
+    .avg-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+    .stat-card { background: var(--bg); border-radius: 10px; padding: 0.85rem 1rem; border: 1px solid var(--border); }
+    .stat-lbl { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+    .stat-val { font-size: 22px; font-weight: 600; }
+    .stat-sub { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .dot-ink { background: var(--blue); } .dot-sol { background: var(--green); } .dot-days { background: #888; }
+
+    .sec-lbl { font-size: 10px; font-weight: 600; color: var(--text-light); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 8px; padding-left: 2px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 1.25rem; overflow: hidden; }
+    .card-header { padding: 0.7rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .card-title { font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; }
+    .legend { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+    .leg-box { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
+    .leg-sat { background: var(--blue-light); border: 1px solid #93c5fd; }
+    .leg-off { background: var(--gray-bg); border: 1px solid #ccc; }
+
+    .week-bar { background: var(--week-bg); padding: 5px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+    .week-sep { border-top: 1px solid var(--border); }
+    .week-tag { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+    .week-date { font-size: 11px; color: var(--text-light); }
+
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    table th { padding: 6px 8px; text-align: center; font-size: 10px; font-weight: 500; color: var(--text-light); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    table th.lbl { text-align: left; width: 76px; }
+    table th.sat { background: var(--blue-light); color: var(--blue-text); font-weight: 600; }
+    table th.off { background: var(--gray-bg); color: var(--gray-text); }
+    table th.oth { background: var(--off-bg); color: #ddd; }
+    table th.sub { background: var(--sub-bg); color: var(--sub-text); font-weight: 600; }
+    table td { padding: 8px 8px; text-align: center; white-space: nowrap; }
+    table td.lbl { text-align: left; font-size: 11px; font-weight: 600; }
+    table td.ink { color: var(--blue); } table td.sol { color: var(--green); }
+    table td.sat-c { background: var(--blue-light); font-weight: 600; }
+    table td.off-c { background: var(--gray-bg); color: var(--gray-text); }
+    table td.oth-c { background: var(--off-bg); color: #ddd; }
+    table td.empty { color: var(--text-light); }
+    table td.sub-ink { background: #E6F1FB; font-weight: 600; color: var(--blue-text); }
+    table td.sub-sol { background: var(--green-light); font-weight: 600; color: var(--green-text); }
+    table tbody tr { border-bottom: 1px solid var(--border); }
+    table tbody tr:last-child { border-bottom: none; }
+
+    .sat-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .sat-item { padding: 0.85rem 1rem; border-right: 1px solid var(--border); }
+    .sat-item:last-child { border-right: none; }
+    .sat-lbl { font-size: 11px; color: var(--text-muted); margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+    .sat-val { font-size: 20px; font-weight: 600; }
+    .sat-pct { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+
+    .cmp-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
+    .cmp-col { padding: 1rem 1.25rem; border-right: 1px solid var(--border); }
+    .cmp-col:last-child { border-right: none; }
+    .cmp-col-title { font-size: 11px; color: var(--text-light); margin-bottom: 10px; font-weight: 600; }
+    .cmp-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
+    .cmp-row:last-child { border-bottom: none; }
+    .cmp-lbl { font-size: 12px; color: var(--text-muted); }
+    .cmp-val { font-size: 13px; font-weight: 600; }
+    .cmp-prev { color: var(--text-light); font-weight: 400; }
+    .up { color: #0F6E56; } .down { color: #A32D2D; }
+    .b-up { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: var(--green-light); color: var(--green-text); margin-left: 6px; }
+    .b-dn { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: var(--red-light); color: var(--red-text); margin-left: 6px; }
+    .cmp-table th { padding: 7px 10px; text-align: right; font-size: 10px; font-weight: 500; color: var(--text-light); border-bottom: 1px solid var(--border); }
+    .cmp-table th:first-child { text-align: left; }
+    .cmp-table td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+    .cmp-table td:first-child { text-align: left; font-size: 11px; font-weight: 600; color: var(--text-muted); }
+    .cmp-table tr:last-child td { border-bottom: none; }
+    .cmp-table .total-row td { background: var(--week-bg); font-weight: 600; }
+    .v-cur { color: var(--text); font-weight: 600; } .v-prev { color: var(--text-light); }
+    .v-na { color: var(--text-light); font-style: italic; font-size: 11px; }
+
+    .loading { text-align: center; padding: 3rem; color: var(--text-muted); font-size: 14px; }
+    .error { text-align: center; padding: 2rem; color: #A32D2D; font-size: 13px; background: var(--red-light); border-radius: 10px; margin: 1rem 0; }
+
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: var(--card); border-radius: 14px; border: 1px solid var(--border); width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--card); z-index: 1; }
+    .modal-title { font-size: 15px; font-weight: 600; }
+    .modal-close { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+    .cal-nav-bar { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); }
+    .cal-nav-lbl { font-size: 13px; font-weight: 600; }
+    .dual-cal { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); }
+    .cal-col { padding: 0.75rem 0.85rem; }
+    .cal-col:first-child { border-right: 1px solid var(--border); }
+    .cal-month-ttl { font-size: 12px; font-weight: 600; text-align: center; margin-bottom: 8px; }
+    .cal-dow { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; margin-bottom: 3px; }
+    .dow-i { text-align: center; font-size: 9px; color: var(--text-light); font-weight: 600; padding: 2px 0; }
+    .dow-i.sat { color: var(--blue); } .dow-i.sun { color: #aaa; }
+    .cal-days { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+    .d { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 11px; cursor: pointer; color: var(--text); position: relative; user-select: none; }
+    .d:hover:not(.sun-d):not(.hol-d):not(.oth-d) { background: #e5e7eb; }
+    .d.oth-d { color: #ddd; cursor: default; }
+    .d.sat-d { color: var(--blue); }
+    .d.sun-d { background: var(--off-bg); color: #ccc; cursor: default; }
+    .d.hol-d { background: var(--off-bg); color: #ccc; cursor: default; }
+    .d.range-start { background: var(--amber); color: #fff; font-weight: 700; border-radius: 6px 0 0 6px; }
+    .d.range-end { background: var(--amber); color: #fff; font-weight: 700; border-radius: 0 6px 6px 0; }
+    .d.range-start.range-end { border-radius: 6px; }
+    .d.in-range { background: var(--amber-light); color: var(--amber-text); border-radius: 0; }
+    .d.already-hol { background: var(--amber-light); color: var(--amber-text); font-weight: 600; }
+    .d.already-work { background: var(--green-light); color: var(--green-text); font-weight: 600; }
+
+    .sel-bar { padding: 0.65rem 1.25rem; background: var(--week-bg); border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+    .sel-bar strong { color: var(--text); }
+    .sel-clear { margin-left: auto; font-size: 11px; color: var(--text-light); cursor: pointer; text-decoration: underline; }
+    .type-section { padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border); }
+    .type-lbl { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+    .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px; }
+    .type-opt { padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 12px; color: var(--text-muted); cursor: pointer; text-align: center; background: var(--bg); }
+    .type-opt.active-hol { border-color: #EF9F27; background: var(--amber-light); color: var(--amber-text); font-weight: 600; }
+    .type-opt.active-work { border-color: var(--green); background: var(--green-light); color: var(--green-text); font-weight: 600; }
+    .type-hint { font-size: 10px; color: var(--text-light); }
+    .note-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+    .note-lbl { font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+    .note-input { flex: 1; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); font-size: 12px; font-family: inherit; }
+    .list-section { padding: 0.85rem 1.25rem; }
+    .list-title { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+    .list-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); }
+    .list-item:last-child { border-bottom: none; }
+    .list-date { font-size: 12px; font-weight: 600; }
+    .list-note { font-size: 10px; color: var(--text-light); }
+    .list-right { display: flex; align-items: center; gap: 8px; }
+    .b-hol { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: var(--amber-light); color: var(--amber-text); }
+    .b-work { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: var(--green-light); color: var(--green-text); }
+    .del-btn { font-size: 14px; color: var(--text-light); cursor: pointer; background: none; border: none; padding: 2px 4px; }
+    .del-btn:hover { color: #A32D2D; }
+    .modal-footer { padding: 0.85rem 1.25rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; bottom: 0; background: var(--card); }
+    .footer-hint { font-size: 10px; color: var(--text-light); }
+    .footer-btns { display: flex; gap: 8px; }
+    .btn-cancel { padding: 7px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); font-size: 12px; color: var(--text-muted); cursor: pointer; font-family: inherit; }
+    .btn-confirm { padding: 7px 16px; border-radius: 8px; border: none; background: var(--blue); font-size: 12px; color: #fff; cursor: pointer; font-family: inherit; }
+    .btn-confirm:disabled { background: #93c5fd; cursor: not-allowed; }
+
+    @media (max-width: 600px) {
+      .stat-row { grid-template-columns: repeat(2, 1fr); }
+      .dual-cal { grid-template-columns: 1fr; }
+      .cal-col:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+      .sat-grid { grid-template-columns: 1fr; }
+      .sat-item { border-right: none; border-bottom: 1px solid var(--border); }
+      .sat-item:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div id="alert-bar" style="display:none;" class="alert">
+    <div class="alert-left">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-text">
+        <strong id="alert-title">農曆假日尚未設定</strong>
+        <span id="alert-desc">請確認並填入假日資料</span>
+      </div>
+    </div>
+    <button class="alert-btn" onclick="openModal()">立即填寫</button>
+  </div>
+  <div class="header">
+    <div class="month-nav">
+      <button class="nav-btn" onclick="changeMonth(-1)">◀</button>
+      <span class="month-title" id="month-title">載入中...</span>
+      <button class="nav-btn" onclick="changeMonth(1)">▶</button>
+    </div>
+    <div class="header-right">
+      <span class="badge" id="month-badge"></span>
+      <button class="setting-btn" onclick="openModal()" title="假日管理">⚙️</button>
+    </div>
+  </div>
+  <div id="dashboard-content"><div class="loading">📊 資料載入中...</div></div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">假日管理</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="cal-nav-bar">
+      <button class="nav-btn" onclick="calPrev()">◀</button>
+      <span class="cal-nav-lbl" id="cal-nav-lbl"></span>
+      <button class="nav-btn" onclick="calNext()">▶</button>
+    </div>
+    <div class="dual-cal">
+      <div class="cal-col">
+        <div class="cal-month-ttl" id="cal-left-title"></div>
+        <div class="cal-dow">
+          <div class="dow-i">M</div><div class="dow-i">T</div><div class="dow-i">W</div>
+          <div class="dow-i">T</div><div class="dow-i">F</div>
+          <div class="dow-i sat">S</div><div class="dow-i sun">S</div>
+        </div>
+        <div class="cal-days" id="cal-left"></div>
+      </div>
+      <div class="cal-col">
+        <div class="cal-month-ttl" id="cal-right-title"></div>
+        <div class="cal-dow">
+          <div class="dow-i">M</div><div class="dow-i">T</div><div class="dow-i">W</div>
+          <div class="dow-i">T</div><div class="dow-i">F</div>
+          <div class="dow-i sat">S</div><div class="dow-i sun">S</div>
+        </div>
+        <div class="cal-days" id="cal-right"></div>
+      </div>
+    </div>
+    <div class="sel-bar">
+      <span id="sel-text">請點選起始日期</span>
+      <span class="sel-clear" onclick="clearSel()">清除</span>
+    </div>
+    <div class="type-section">
+      <div class="type-lbl">設定類型</div>
+      <div class="type-grid">
+        <div class="type-opt active-hol" id="type-hol" onclick="setType('holiday')">休假日</div>
+        <div class="type-opt" id="type-work" onclick="setType('workday')">調班補班</div>
+      </div>
+      <div class="type-hint">休假日 = 原本上班改放假　／　調班補班 = 原本放假改上班</div>
+      <div class="note-row">
+        <span class="note-lbl">說明</span>
+        <input class="note-input" id="note-input" type="text" placeholder="例：農曆新年" />
+      </div>
+    </div>
+    <div class="list-section">
+      <div class="list-title" id="list-year-title">已設定假日</div>
+      <div id="holiday-list"></div>
+    </div>
+    <div class="modal-footer">
+      <span class="footer-hint">點選起始日 → 結束日，自動計算天數</span>
+      <div class="footer-btns">
+        <button class="btn-cancel" onclick="closeModal()">取消</button>
+        <button class="btn-confirm" id="btn-add" onclick="addHoliday()">新增假日</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHEET_ID = '1WqdtnGXvrK0NjsaSY47fOJTzxMpCj-nVlfTc0qAu5DM';
+const SHEET_SHIPMENTS = 'shipments';
+const SHEET_HOLIDAYS = 'holidays';
+const MONTH_NAMES = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth() + 1;
+let allShipments = [];
+let allHolidays = [];
+let calBaseYear = currentYear;
+let calBaseMonth = currentMonth;
+let selStart = null, selEnd = null;
+let selType = 'holiday';
+
+// ── FIX BUG 1: Handle Google Sheets Date() format ──
+function parseDate(s) {
+  if (!s) return null;
+  const str = String(s);
+  // Google Sheets gviz returns dates as "Date(2026,0,1)" (month is 0-indexed)
+  const gvizMatch = str.match(/^Date\((\d+),(\d+),(\d+)\)$/);
+  if (gvizMatch) {
+    return new Date(parseInt(gvizMatch[1]), parseInt(gvizMatch[2]), parseInt(gvizMatch[3]));
+  }
+  // Standard YYYY/MM/DD format
+  const parts = str.split('/');
+  if (parts.length === 3) {
+    return new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  }
+  return null;
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}/${m}/${day}`;
+}
+
+// ── FIX BUG 2: fmt(0) should show 0, not empty ──
+function fmt(n) {
+  if (n === null || n === undefined || n === '') return '—';
+  const num = Number(n);
+  if (isNaN(num)) return '—';
+  return num.toLocaleString();
+}
+
+function getDayOfWeek(d) { return (d.getDay()+6)%7; } // 0=Mon, 6=Sun
+
+// ── FIX BUG 8: fetchSheet uses .f for dates if available, falls back to .v ──
+async function fetchSheet(sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+  const res = await fetch(url);
+  const text = await res.text();
+  const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+  const cols = json.table.cols.map(c => c.label);
+  return json.table.rows
+    .filter(r => r && r.c && r.c[0] && (r.c[0].v !== null))
+    .map(r => {
+      const obj = {};
+      cols.forEach((c, i) => {
+        const cell = r.c[i];
+        if (!cell || cell.v === null || cell.v === undefined) {
+          obj[c] = '';
+        } else {
+          // For date columns: use formatted value (f) if available, else raw (v)
+          // gviz date .v = "Date(2026,0,1)", .f = "2026/01/01" (locale dependent)
+          // We use .v and parse it ourselves for reliability
+          obj[c] = cell.v;
+        }
+      });
+      return obj;
+    });
+}
+
+async function loadData() {
+  try {
+    const [s, h] = await Promise.all([
+      fetchSheet(SHEET_SHIPMENTS),
+      fetchSheet(SHEET_HOLIDAYS)
+    ]);
+    allShipments = s.filter(r => r.date);
+    allHolidays = h.filter(r => r.date);
+    checkAlert();
+    renderDashboard();
+  } catch(e) {
+    document.getElementById('dashboard-content').innerHTML =
+      `<div class="error">⚠️ 資料載入失敗，請確認 Google Sheets 已設定公開讀取。<br><small>${e.message}</small></div>`;
+  }
+}
+
+// ── FIX BUG 3: Saturday holidays should also be treated as off days ──
+function isHoliday(dateStr) {
+  const d = parseDate(dateStr);
+  if (!d) return false;
+  // Sunday always off
+  if (d.getDay() === 0) return true;
+  // Check holidays table (works for ALL days including Saturday)
+  const override = allHolidays.find(h => {
+    const hd = parseDate(String(h.date));
+    return hd && fmtDate(hd) === dateStr;
+  });
+  if (override) return override.status === 'holiday';
+  return false;
+}
+
+function isSaturday(dateStr) {
+  const d = parseDate(dateStr);
+  return d && d.getDay() === 6;
+}
+
+function isCurrentMonth(dateStr, year, month) {
+  const d = parseDate(dateStr);
+  return d && d.getFullYear() === year && d.getMonth()+1 === month;
+}
+
+function getWeeksOfMonth(year, month) {
+  const weeks = [];
+  const firstDay = new Date(year, month-1, 1);
+  const lastDay = new Date(year, month, 0);
+  let weekStart = new Date(firstDay);
+  const dow = getDayOfWeek(firstDay);
+  weekStart.setDate(firstDay.getDate() - dow);
+  while (weekStart <= lastDay) {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + i);
+      days.push(fmtDate(d));
+    }
+    if (days.some(ds => isCurrentMonth(ds, year, month))) weeks.push(days);
+    weekStart.setDate(weekStart.getDate() + 7);
+  }
+  return weeks;
+}
+
+function getShipment(dateStr, type) {
+  return allShipments
+    .filter(r => {
+      const d = parseDate(String(r.date));
+      return d && fmtDate(d) === dateStr && String(r.type).toUpperCase() === type.toUpperCase();
+    })
+    .reduce((s, r) => s + (Number(r.qty) || 0), 0);
+}
+
+function diffBadge(diff, pct) {
+  if (pct === null || pct === undefined) return '';
+  const cls = diff >= 0 ? 'b-up' : 'b-dn';
+  const arrow = diff >= 0 ? '▲' : '▼';
+  return `<span class="${cls}">${arrow} ${Math.abs(pct)}%</span>`;
+}
+
+function diffVal(diff) {
+  if (!diff && diff !== 0) return '—';
+  const cls = diff > 0 ? 'up' : diff < 0 ? 'down' : '';
+  const sign = diff > 0 ? '+' : '';
+  return `<span class="${cls}">${sign}${fmt(diff)}</span>`;
+}
+
+function calcPct(cur, prev) {
+  if (!prev) return null;
+  return ((cur - prev) / prev * 100).toFixed(1);
+}
+
+function renderDashboard() {
+  const y = currentYear, m = currentMonth;
+  const now = new Date();
+  const weeks = getWeeksOfMonth(y, m);
+
+  document.getElementById('month-title').textContent = `${y}年 ${m}月`;
+  const isPast = y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth()+1);
+  const isCurrent = y === now.getFullYear() && m === now.getMonth()+1;
+  document.getElementById('month-badge').textContent = isPast ? '已結束' : isCurrent ? '進行中' : '尚未開始';
+
+  // Monthly stats
+  let inkTotal=0, solTotal=0, workDays=0, satInk=0, satSol=0;
+  const first = new Date(y,m-1,1), last = new Date(y,m,0);
+  for (let d=new Date(first); d<=last; d.setDate(d.getDate()+1)) {
+    const ds = fmtDate(new Date(d));
+    const ink = getShipment(ds,'INK'), sol = getShipment(ds,'SOLVENT');
+    inkTotal += ink; solTotal += sol;
+    if (!isHoliday(ds)) workDays++;
+    if (isSaturday(ds) && !isHoliday(ds)) { satInk += ink; satSol += sol; }
+  }
+  const today = fmtDate(now);
+  const remainDays = Array.from({length: last.getDate()}, (_,i) => {
+    const d = new Date(y,m-1,i+1);
+    return fmtDate(d);
+  }).filter(ds => !isHoliday(ds) && ds > today).length;
+
+  const inkAvg = workDays > 0 ? Math.round(inkTotal/workDays) : 0;
+  const solAvg = workDays > 0 ? Math.round(solTotal/workDays) : 0;
+  const satTotal = satInk + satSol;
+  const inkPct = inkTotal > 0 ? Math.round(satInk/inkTotal*100) : 0;
+  const solPct = solTotal > 0 ? Math.round(satSol/solTotal*100) : 0;
+  const totPct = (inkTotal+solTotal) > 0 ? Math.round(satTotal/(inkTotal+solTotal)*100) : 0;
+
+  // Previous year same month
+  const prevY = y-1;
+  let prevInk=0, prevSol=0;
+  allShipments.forEach(r => {
+    const d = parseDate(String(r.date));
+    if (!d || d.getFullYear()!==prevY || d.getMonth()+1!==m) return;
+    const qty = Number(r.qty)||0;
+    if (String(r.type).toUpperCase()==='INK') prevInk += qty;
+    if (String(r.type).toUpperCase()==='SOLVENT') prevSol += qty;
+  });
+
+  // Quarterly
+  const qMap = {1:[1,2,3],2:[4,5,6],3:[7,8,9],4:[10,11,12]};
+  const curQ = Object.keys(qMap).find(q => qMap[q].includes(m));
+  const qMonths = qMap[curQ];
+
+  // Yearly accumulate
+  let yearInk=0, yearSol=0, prevYearInk=0, prevYearSol=0;
+  allShipments.forEach(r => {
+    const d = parseDate(String(r.date));
+    if (!d) return;
+    const qty = Number(r.qty)||0;
+    const type = String(r.type).toUpperCase();
+    if (d.getFullYear()===y && d.getMonth()+1<=m) {
+      if (type==='INK') yearInk+=qty;
+      if (type==='SOLVENT') yearSol+=qty;
+    }
+    if (d.getFullYear()===prevY && d.getMonth()+1<=m) {
+      if (type==='INK') prevYearInk+=qty;
+      if (type==='SOLVENT') prevYearSol+=qty;
+    }
+  });
+
+  // Weekly table
+  function renderWeeks() {
+    return weeks.map((days, wi) => {
+      const inMonthDays = days.filter(ds => isCurrentMonth(ds, y, m));
+      const startD = parseDate(inMonthDays[0]);
+      const endD = parseDate(inMonthDays[inMonthDays.length-1]);
+      const pad = n => String(n).padStart(2,'0');
+      const rangeStr = `${pad(startD.getMonth()+1)}/${pad(startD.getDate())} – ${pad(endD.getMonth()+1)}/${pad(endD.getDate())}`;
+
+      const headers = days.map(ds => {
+        const d = parseDate(ds);
+        const inMonth = isCurrentMonth(ds, y, m);
+        const dow = DAY_NAMES[getDayOfWeek(d)];
+        const label = `${dow}<br>${pad(d.getMonth()+1)}/${pad(d.getDate())}`;
+        if (!inMonth) return `<th class="oth">${label}</th>`;
+        if (isHoliday(ds) && d.getDay()!==6) return `<th class="off">${label}</th>`;
+        if (d.getDay()===0) return `<th class="off">${label}</th>`;
+        if (d.getDay()===6 && isHoliday(ds)) return `<th class="off">${label}</th>`;
+        if (d.getDay()===6) return `<th class="sat">${label}</th>`;
+        return `<th>${label}</th>`;
+      }).join('');
+
+      let inkWeek=0, solWeek=0;
+
+      function makeCell(ds, type) {
+        const d = parseDate(ds);
+        const inMonth = isCurrentMonth(ds, y, m);
+        if (!inMonth) return `<td class="oth-c">—</td>`;
+        const isOff = d.getDay()===0 || isHoliday(ds);
+        const isSat = d.getDay()===6 && !isHoliday(ds);
+        const val = getShipment(ds, type);
+        if (type==='INK') inkWeek += val;
+        else solWeek += val;
+        if (isOff) return `<td class="off-c">—</td>`;
+        const colorClass = type==='INK' ? 'ink' : 'sol';
+        if (isSat) return `<td class="sat-c ${colorClass}">${val ? fmt(val) : '<span class="empty">—</span>'}</td>`;
+        return `<td class="${val ? colorClass : 'empty'}">${val ? fmt(val) : '—'}</td>`;
+      }
+
+      const inkCells = days.map(ds => makeCell(ds,'INK')).join('');
+      // Reset inkWeek before sol pass
+      const solCells = days.map(ds => {
+        const d = parseDate(ds);
+        const inMonth = isCurrentMonth(ds, y, m);
+        if (!inMonth) return `<td class="oth-c">—</td>`;
+        const isOff = d.getDay()===0 || isHoliday(ds);
+        const isSat = d.getDay()===6 && !isHoliday(ds);
+        const val = getShipment(ds,'SOLVENT');
+        solWeek += val;
+        if (isOff) return `<td class="off-c">—</td>`;
+        if (isSat) return `<td class="sat-c sol">${val ? fmt(val) : '<span class="empty">—</span>'}</td>`;
+        return `<td class="${val ? 'sol' : 'empty'}">${val ? fmt(val) : '—'}</td>`;
+      }).join('');
+
+      return `
+        <div class="week-bar ${wi>0?'week-sep':''}">
+          <span class="week-tag">第 ${wi+1} 週</span>
+          <span class="week-date">${rangeStr}</span>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th class="lbl">類別</th>${headers}<th class="sub">週計</th></tr></thead>
+          <tbody>
+            <tr><td class="lbl ink">INK</td>${inkCells}<td class="sub-ink">${inkWeek ? fmt(inkWeek) : '—'}</td></tr>
+            <tr><td class="lbl sol">SOLVENT</td>${solCells}<td class="sub-sol">${solWeek ? fmt(solWeek) : '—'}</td></tr>
+          </tbody>
+        </table></div>`;
+    }).join('');
+  }
+
+  // Quarterly rows
+  function getQData(qy, qm) {
+    return allShipments
+      .filter(r => { const d=parseDate(String(r.date)); return d&&d.getFullYear()===qy&&d.getMonth()+1===qm; })
+      .reduce((acc,r) => {
+        const t = String(r.type).toUpperCase();
+        const qty = Number(r.qty)||0;
+        if (t==='INK') acc.ink+=qty;
+        if (t==='SOLVENT') acc.sol+=qty;
+        return acc;
+      }, {ink:0, sol:0});
+  }
+
+  function renderQRows() {
+    return qMonths.map(qm => {
+      const cur = getQData(y, qm);
+      const prev = getQData(prevY, qm);
+      const isNA = y > now.getFullYear() || (y===now.getFullYear() && qm > now.getMonth()+1);
+      const iiPct = calcPct(cur.ink, prev.ink);
+      const isPct = calcPct(cur.sol, prev.sol);
+      const itPct = calcPct(cur.ink+cur.sol, prev.ink+prev.sol);
+      return `<tr>
+        <td>${qm}月</td>
+        <td class="v-cur">${isNA?'<span class="v-na">尚未開始</span>':fmt(cur.ink)}</td>
+        <td class="v-prev">${prev.ink?fmt(prev.ink):'—'}</td>
+        <td>${isNA||!prev.ink?'—':diffBadge(cur.ink-prev.ink,iiPct)}</td>
+        <td class="v-cur">${isNA?'<span class="v-na">尚未開始</span>':fmt(cur.sol)}</td>
+        <td class="v-prev">${prev.sol?fmt(prev.sol):'—'}</td>
+        <td>${isNA||!prev.sol?'—':diffBadge(cur.sol-prev.sol,isPct)}</td>
+        <td class="v-cur">${isNA?'<span class="v-na">尚未開始</span>':fmt(cur.ink+cur.sol)}</td>
+        <td class="v-prev">${(prev.ink+prev.sol)?fmt(prev.ink+prev.sol):'—'}</td>
+        <td>${isNA||!(prev.ink+prev.sol)?'—':diffBadge((cur.ink+cur.sol)-(prev.ink+prev.sol),itPct)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const qTot = qMonths.reduce((acc,qm)=>{ const d=getQData(y,qm); acc.ink+=d.ink; acc.sol+=d.sol; return acc; },{ink:0,sol:0});
+  const qPrev = qMonths.reduce((acc,qm)=>{ const d=getQData(prevY,qm); acc.ink+=d.ink; acc.sol+=d.sol; return acc; },{ink:0,sol:0});
+
+  const inkDiff = inkTotal-prevInk, solDiff = solTotal-prevSol;
+
+  const html = `
+    <p class="sec-lbl">當月總覽</p>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-lbl"><span class="dot dot-ink"></span>INK 月總量</div><div class="stat-val">${fmt(inkTotal)}</div><div class="stat-sub">公斤</div></div>
+      <div class="stat-card"><div class="stat-lbl"><span class="dot dot-sol"></span>SOLVENT 月總量</div><div class="stat-val">${fmt(solTotal)}</div><div class="stat-sub">公斤</div></div>
+      <div class="stat-card"><div class="stat-lbl"><span class="dot dot-days"></span>上班天數</div><div class="stat-val">${workDays}</div><div class="stat-sub">剩餘 ${remainDays} 天</div></div>
+    </div>
+    <div class="avg-row">
+      <div class="stat-card"><div class="stat-lbl"><span class="dot dot-ink"></span>INK 日均出貨</div><div class="stat-val">${fmt(inkAvg)}</div><div class="stat-sub">公斤／天</div></div>
+      <div class="stat-card"><div class="stat-lbl"><span class="dot dot-sol"></span>SOLVENT 日均出貨</div><div class="stat-val">${fmt(solAvg)}</div><div class="stat-sub">公斤／天</div></div>
+    </div>
+
+    <p class="sec-lbl">① 每日出貨明細</p>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">每日出貨明細</span>
+        <div class="legend">
+          <span class="legend-item"><span class="dot dot-ink"></span>INK</span>
+          <span class="legend-item"><span class="dot dot-sol"></span>SOLVENT</span>
+          <span class="legend-item"><span class="leg-box leg-sat"></span>禮拜六</span>
+          <span class="legend-item"><span class="leg-box leg-off"></span>休息日</span>
+        </div>
+      </div>
+      ${renderWeeks()}
+    </div>
+
+    <p class="sec-lbl">② 本月週末出貨量</p>
+    <div class="card">
+      <div class="card-header"><span class="card-title">禮拜六出貨統計</span></div>
+      <div class="sat-grid">
+        <div class="sat-item"><div class="sat-lbl"><span class="dot dot-ink"></span>INK</div><div class="sat-val">${fmt(satInk)}</div><div class="sat-pct">佔月總量 ${inkPct}%</div></div>
+        <div class="sat-item"><div class="sat-lbl"><span class="dot dot-sol"></span>SOLVENT</div><div class="sat-val">${fmt(satSol)}</div><div class="sat-pct">佔月總量 ${solPct}%</div></div>
+        <div class="sat-item"><div class="sat-lbl">合計</div><div class="sat-val">${fmt(satTotal)}</div><div class="sat-pct">佔月總量 ${totPct}%</div></div>
+      </div>
+    </div>
+
+    <p class="sec-lbl">③ 同期比較</p>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">當月比較</span>
+        <span style="font-size:11px;color:var(--text-muted);">${y}/${String(m).padStart(2,'0')} vs ${prevY}/${String(m).padStart(2,'0')}</span>
+      </div>
+      <div class="cmp-grid">
+        <div class="cmp-col">
+          <div class="cmp-col-title">INK</div>
+          <div class="cmp-row"><span class="cmp-lbl">${y}</span><span class="cmp-val">${fmt(inkTotal)}</span></div>
+          <div class="cmp-row"><span class="cmp-lbl">${prevY}</span><span class="cmp-val cmp-prev">${prevInk?fmt(prevInk):'—'}</span></div>
+          <div class="cmp-row"><span class="cmp-lbl">差異</span><span class="cmp-val">${prevInk?diffVal(inkDiff)+diffBadge(inkDiff,calcPct(inkTotal,prevInk)):'—'}</span></div>
+        </div>
+        <div class="cmp-col">
+          <div class="cmp-col-title">SOLVENT</div>
+          <div class="cmp-row"><span class="cmp-lbl">${y}</span><span class="cmp-val">${fmt(solTotal)}</span></div>
+          <div class="cmp-row"><span class="cmp-lbl">${prevY}</span><span class="cmp-val cmp-prev">${prevSol?fmt(prevSol):'—'}</span></div>
+          <div class="cmp-row"><span class="cmp-lbl">差異</span><span class="cmp-val">${prevSol?diffVal(solDiff)+diffBadge(solDiff,calcPct(solTotal,prevSol)):'—'}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">當季比較 Q${curQ}（${qMonths.map(n=>MONTH_NAMES[n]).join('–')}）</span>
+        <span style="font-size:11px;color:var(--text-muted);">${y} vs ${prevY}</span>
+      </div>
+      <div class="tbl-wrap"><table class="cmp-table">
+        <thead><tr>
+          <th>月份</th>
+          <th>INK ${y}</th><th>INK ${prevY}</th><th>差異</th>
+          <th>SOL ${y}</th><th>SOL ${prevY}</th><th>差異</th>
+          <th>合計 ${y}</th><th>合計 ${prevY}</th><th>差異</th>
+        </tr></thead>
+        <tbody>
+          ${renderQRows()}
+          <tr class="total-row">
+            <td>Q${curQ} Total</td>
+            <td class="v-cur">${fmt(qTot.ink)}</td><td class="v-prev">${qPrev.ink?fmt(qPrev.ink):'—'}</td>
+            <td>${qPrev.ink?diffBadge(qTot.ink-qPrev.ink,calcPct(qTot.ink,qPrev.ink)):'—'}</td>
+            <td class="v-cur">${fmt(qTot.sol)}</td><td class="v-prev">${qPrev.sol?fmt(qPrev.sol):'—'}</td>
+            <td>${qPrev.sol?diffBadge(qTot.sol-qPrev.sol,calcPct(qTot.sol,qPrev.sol)):'—'}</td>
+            <td class="v-cur">${fmt(qTot.ink+qTot.sol)}</td><td class="v-prev">${(qPrev.ink+qPrev.sol)?fmt(qPrev.ink+qPrev.sol):'—'}</td>
+            <td>${(qPrev.ink+qPrev.sol)?diffBadge((qTot.ink+qTot.sol)-(qPrev.ink+qPrev.sol),calcPct(qTot.ink+qTot.sol,qPrev.ink+qPrev.sol)):'—'}</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">年度比較</span>
+        <span style="font-size:11px;color:var(--text-muted);">${y} vs ${prevY} 累計至 ${m} 月</span>
+      </div>
+      <div class="tbl-wrap"><table class="cmp-table">
+        <thead><tr><th>項目</th><th>${y} 累計</th><th>${prevY} 同期</th><th>差異</th><th>成長率</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>INK</td>
+            <td class="v-cur">${fmt(yearInk)}</td><td class="v-prev">${prevYearInk?fmt(prevYearInk):'—'}</td>
+            <td>${prevYearInk?diffVal(yearInk-prevYearInk):'—'}</td>
+            <td>${prevYearInk?diffBadge(yearInk-prevYearInk,calcPct(yearInk,prevYearInk)):'—'}</td>
+          </tr>
+          <tr>
+            <td>SOLVENT</td>
+            <td class="v-cur">${fmt(yearSol)}</td><td class="v-prev">${prevYearSol?fmt(prevYearSol):'—'}</td>
+            <td>${prevYearSol?diffVal(yearSol-prevYearSol):'—'}</td>
+            <td>${prevYearSol?diffBadge(yearSol-prevYearSol,calcPct(yearSol,prevYearSol)):'—'}</td>
+          </tr>
+          <tr class="total-row">
+            <td>合計</td>
+            <td class="v-cur">${fmt(yearInk+yearSol)}</td><td class="v-prev">${(prevYearInk+prevYearSol)?fmt(prevYearInk+prevYearSol):'—'}</td>
+            <td>${(prevYearInk+prevYearSol)?diffVal((yearInk+yearSol)-(prevYearInk+prevYearSol)):'—'}</td>
+            <td>${(prevYearInk+prevYearSol)?diffBadge((yearInk+yearSol)-(prevYearInk+prevYearSol),calcPct(yearInk+yearSol,prevYearInk+prevYearSol)):'—'}</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>`;
+
+  document.getElementById('dashboard-content').innerHTML = html;
+}
+
+function changeMonth(delta) {
+  currentMonth += delta;
+  if (currentMonth > 12) { currentMonth=1; currentYear++; }
+  if (currentMonth < 1) { currentMonth=12; currentYear--; }
+  renderDashboard();
+}
+
+function checkAlert() {
+  const nextYear = new Date().getFullYear()+1;
+  const hasNextYear = allHolidays.some(h => {
+    const d = parseDate(String(h.date));
+    return d && d.getFullYear()===nextYear && h.status==='holiday';
+  });
+  const alertBar = document.getElementById('alert-bar');
+  if (!hasNextYear && new Date().getMonth()>=10) {
+    document.getElementById('alert-title').textContent = `${nextYear}年農曆假日尚未設定`;
+    document.getElementById('alert-desc').textContent = '請確認越南政府公告並填入假日資料';
+    alertBar.style.display = 'flex';
+  } else {
+    alertBar.style.display = 'none';
+  }
+}
+
+// ── MODAL ──
+function openModal() {
+  calBaseYear = currentYear; calBaseMonth = currentMonth;
+  selStart=null; selEnd=null;
+  document.getElementById('modal-overlay').classList.add('active');
+  renderCal(); renderHolidayList();
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+}
+
+// ── FIX BUG 4: refresh holiday list after cal navigation ──
+function calPrev() {
+  calBaseMonth--;
+  if (calBaseMonth<1) { calBaseMonth=12; calBaseYear--; }
+  renderCal(); renderHolidayList();
+}
+function calNext() {
+  calBaseMonth++;
+  if (calBaseMonth>12) { calBaseMonth=1; calBaseYear++; }
+  renderCal(); renderHolidayList();
+}
+
+function setType(t) {
+  selType=t;
+  document.getElementById('type-hol').className='type-opt'+(t==='holiday'?' active-hol':'');
+  document.getElementById('type-work').className='type-opt'+(t==='workday'?' active-work':'');
+}
+function clearSel() { selStart=null; selEnd=null; renderCal(); updateSelBar(); }
+
+function renderCal() {
+  const right = { y: calBaseYear, m: calBaseMonth+1 };
+  if (right.m>12) { right.m=1; right.y=calBaseYear+1; } else { right.y=calBaseYear; }
+  document.getElementById('cal-nav-lbl').textContent=`${calBaseYear}年 ${calBaseMonth}月 – ${right.m}月`;
+  document.getElementById('cal-left-title').textContent=`${calBaseMonth}月`;
+  document.getElementById('cal-right-title').textContent=`${right.m}月`;
+  renderCalMonth('cal-left', calBaseYear, calBaseMonth);
+  renderCalMonth('cal-right', right.y, right.m);
+}
+
+function renderCalMonth(id, y, m) {
+  const el = document.getElementById(id);
+  const first = new Date(y,m-1,1);
+  const last = new Date(y,m,0);
+  const startDow = getDayOfWeek(first);
+  let html='';
+  for (let i=0;i<startDow;i++) html+=`<div class="d oth-d"></div>`;
+  for (let day=1;day<=last.getDate();day++) {
+    const d = new Date(y,m-1,day);
+    const ds = fmtDate(d);
+    const isSun = d.getDay()===0;
+    const isHol = isHoliday(ds);
+    const isSat = d.getDay()===6;
+    let cls='d';
+    if (isSun) cls+=' sun-d';
+    else if (isHol) cls+=' hol-d';
+    else if (isSat) cls+=' sat-d';
+    if (!isSun && !isHol && selStart) {
+      const dt=d.getTime(), s=parseDate(selStart)?.getTime();
+      const e=selEnd?parseDate(selEnd)?.getTime():s;
+      if (s&&e) {
+        const lo=Math.min(s,e),hi=Math.max(s,e);
+        if (dt===lo&&dt===hi) cls+=' range-start range-end';
+        else if (dt===lo) cls+=' range-start';
+        else if (dt===hi) cls+=' range-end';
+        else if (dt>lo&&dt<hi) cls+=' in-range';
+      }
+    }
+    const clickable=!isSun&&!isHol;
+    html+=`<div class="${cls}"${clickable?` onclick="pickDay('${ds}')"`:''} >${day}</div>`;
+  }
+  el.innerHTML=html;
+}
+
+function pickDay(ds) {
+  if (!selStart) { selStart=ds; selEnd=null; }
+  else if (!selEnd) {
+    if (ds<selStart) { selEnd=selStart; selStart=ds; }
+    else if (ds===selStart) { selStart=null; }
+    else selEnd=ds;
+  } else { selStart=ds; selEnd=null; }
+  renderCal(); updateSelBar();
+}
+
+function updateSelBar() {
+  const el=document.getElementById('sel-text');
+  if (!selStart) { el.innerHTML='請點選起始日期'; return; }
+  if (!selEnd) { el.innerHTML=`起始：<strong>${selStart}</strong>　請繼續點選結束日期`; return; }
+  const s=parseDate(selStart),e=parseDate(selEnd);
+  let count=0;
+  for (let d=new Date(s);d<=e;d.setDate(d.getDate()+1)) {
+    if (d.getDay()!==0&&!isHoliday(fmtDate(new Date(d)))) count++;
+  }
+  el.innerHTML=`已選 <strong>${count} 天</strong>　${selStart} → ${selEnd}`;
+}
+
+function renderHolidayList() {
+  const listEl=document.getElementById('holiday-list');
+  document.getElementById('list-year-title').textContent=`已設定（${calBaseYear}年）`;
+  const yearHols=allHolidays
+    .filter(h=>{ const d=parseDate(String(h.date)); return d&&d.getFullYear()===calBaseYear; })
+    .sort((a,b)=>String(a.date)<String(b.date)?-1:1);
+  if (!yearHols.length) {
+    listEl.innerHTML='<div style="font-size:12px;color:var(--text-light);padding:8px 0;">尚未設定任何假日</div>';
+    return;
+  }
+  listEl.innerHTML=yearHols.map(h=>{
+    const badge=h.status==='holiday'?`<span class="b-hol">休假日</span>`:`<span class="b-work">調班補班</span>`;
+    const del=`<button class="del-btn" onclick="deleteHoliday('${h.date}')">🗑</button>`;
+    return `<div class="list-item">
+      <div><div class="list-date">${h.date}</div><div class="list-note">${h.note||''}</div></div>
+      <div class="list-right">${badge}${del}</div>
+    </div>`;
+  }).join('');
+}
+
+async function addHoliday() {
+  if (!selStart) { alert('請先點選日期'); return; }
+  const end=selEnd||selStart;
+  const note=document.getElementById('note-input').value;
+  const rows=[];
+  const s=parseDate(selStart),e=parseDate(end);
+  for (let d=new Date(s);d<=e;d.setDate(d.getDate()+1)) {
+    if (d.getDay()===0) continue;
+    rows.push({date:fmtDate(new Date(d)),status:selType,note});
+  }
+  alert(`✅ 已準備新增 ${rows.length} 筆資料\n\n⚠️ 寫入功能需要下一步設定 Google Apps Script 才能使用。\n請繼續按照教學步驟進行。`);
+}
+
+async function deleteHoliday(dateStr) {
+  if (!confirm(`確定要刪除 ${dateStr} 的假日設定？`)) return;
+  alert('⚠️ 刪除功能需要設定 Google Apps Script 才能執行。\n請繼續按照教學步驟進行。');
+}
+
+loadData();
+</script>
+</body>
+</html>
