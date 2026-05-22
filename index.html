@@ -89,6 +89,25 @@
     .sat-lbl { font-size: 11px; color: var(--text-muted); margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
     .sat-val { font-size: 20px; font-weight: 600; }
     .sat-pct { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+    .q-months-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--border); }
+    .q-month-col { padding: 0.85rem 1rem; border-right: 1px solid var(--border); }
+    .q-month-col:last-child { border-right: none; }
+    .q-month-hdr { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+    .q-month-hdr span { font-size: 10px; color: var(--text-light); font-weight: 400; }
+    .q-row { display: flex; align-items: flex-start; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); }
+    .q-row:last-child { border-bottom: none; }
+    .q-lbl { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; padding-top: 2px; }
+    .q-rvals { text-align: right; }
+    .q-cur { font-size: 13px; font-weight: 600; color: var(--text); }
+    .q-prev { font-size: 10px; color: var(--text-light); margin-top: 2px; }
+    .q-badge { margin-top: 3px; }
+    .q-season-total { padding: 0.85rem 1.25rem; background: var(--week-bg); }
+    .q-st-title { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; }
+    .q-st-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .q-st-lbl { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+    .q-st-val { font-size: 18px; font-weight: 600; color: var(--text); }
+    .q-st-diff { font-size: 11px; margin-top: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .q-st-prev { font-size: 10px; color: var(--text-light); }
 
     .cmp-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
     .cmp-col { padding: 1rem 1.25rem; border-right: 1px solid var(--border); }
@@ -610,54 +629,74 @@ function renderDashboard() {
         </div>
       </div>${renderWeeks()}
     </div>
-    <p class="sec-lbl">② 本月週末出貨量</p>
-    <div class="card">
-      <div class="card-header"><span class="card-title">禮拜六出貨統計</span></div>
-      <div class="sat-grid">
-        <div class="sat-item"><div class="sat-lbl"><span class="dot dot-ink"></span>INK</div><div class="sat-val">${fmt(satInk)}</div><div class="sat-pct">佔月總量 ${inkPct}%</div></div>
-        <div class="sat-item"><div class="sat-lbl"><span class="dot dot-sol"></span>SOLVENT</div><div class="sat-val">${fmt(satSol)}</div><div class="sat-pct">佔月總量 ${solPct}%</div></div>
-        <div class="sat-item"><div class="sat-lbl">合計</div><div class="sat-val">${fmt(satTotal)}</div><div class="sat-pct">佔月總量 ${totPct}%</div></div>
-      </div>
-    </div>
-    <p class="sec-lbl">③ 同期比較</p>
+    <p class="sec-lbl">② 同期比較</p>
     <div class="card">
       <div class="card-header"><span class="card-title">當月比較</span><span style="font-size:11px;color:var(--text-muted);">${y}/${pad(m)} vs ${prevY}/${pad(m)}</span></div>
-      <div class="cmp-grid">
-        <div class="cmp-col"><div class="cmp-col-title">INK</div>
-          <div class="cmp-row"><span class="cmp-lbl">${y}</span><span class="cmp-val">${fmt(inkTotal)}</span></div>
-          <div class="cmp-row"><span class="cmp-lbl">${prevY}</span><span class="cmp-val cmp-prev">${prevInk?fmt(prevInk):'—'}</span></div>
-          <div class="cmp-row"><span class="cmp-lbl">差異</span><span class="cmp-val">${prevInk?diffVal(inkTotal-prevInk)+diffBadge(inkTotal-prevInk,calcPct(inkTotal,prevInk)):'—'}</span></div>
-        </div>
-        <div class="cmp-col"><div class="cmp-col-title">SOLVENT</div>
-          <div class="cmp-row"><span class="cmp-lbl">${y}</span><span class="cmp-val">${fmt(solTotal)}</span></div>
-          <div class="cmp-row"><span class="cmp-lbl">${prevY}</span><span class="cmp-val cmp-prev">${prevSol?fmt(prevSol):'—'}</span></div>
-          <div class="cmp-row"><span class="cmp-lbl">差異</span><span class="cmp-val">${prevSol?diffVal(solTotal-prevSol)+diffBadge(solTotal-prevSol,calcPct(solTotal,prevSol)):'—'}</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header"><span class="card-title">當季比較 Q${curQ}（${qMonths.map(n=>MONTH_NAMES[n]).join('–')}）</span><span style="font-size:11px;color:var(--text-muted);">${y} vs ${prevY}</span></div>
       <div class="tbl-wrap"><table class="cmp-table">
-        <thead><tr><th>月份</th><th>INK ${y}</th><th>INK ${prevY}</th><th>差異</th><th>SOL ${y}</th><th>SOL ${prevY}</th><th>差異</th><th>合計 ${y}</th><th>合計 ${prevY}</th><th>差異</th></tr></thead>
-        <tbody>${renderQRows()}
-          <tr class="total-row"><td>Q${curQ} Total</td>
-            <td class="v-cur">${fmt(qTot.ink)}</td><td class="v-prev">${qPrev.ink?fmt(qPrev.ink):'—'}</td>
-            <td>${qPrev.ink?diffBadge(qTot.ink-qPrev.ink,calcPct(qTot.ink,qPrev.ink)):'—'}</td>
-            <td class="v-cur">${fmt(qTot.sol)}</td><td class="v-prev">${qPrev.sol?fmt(qPrev.sol):'—'}</td>
-            <td>${qPrev.sol?diffBadge(qTot.sol-qPrev.sol,calcPct(qTot.sol,qPrev.sol)):'—'}</td>
-            <td class="v-cur">${fmt(qTot.ink+qTot.sol)}</td><td class="v-prev">${(qPrev.ink+qPrev.sol)?fmt(qPrev.ink+qPrev.sol):'—'}</td>
-            <td>${(qPrev.ink+qPrev.sol)?diffBadge((qTot.ink+qTot.sol)-(qPrev.ink+qPrev.sol),calcPct(qTot.ink+qTot.sol,qPrev.ink+qPrev.sol)):'—'}</td>
-          </tr>
+        <thead><tr><th>項目</th><th>${y}</th><th>${prevY}</th><th>差異量</th><th>差異%</th></tr></thead>
+        <tbody>
+          <tr><td><span class="dot dot-ink"></span>INK</td><td class="v-cur">${fmt(inkTotal)}</td><td class="v-prev">${prevInk?fmt(prevInk):'—'}</td><td>${prevInk?diffVal(inkTotal-prevInk):'—'}</td><td>${prevInk?diffBadge(inkTotal-prevInk,calcPct(inkTotal,prevInk)):'—'}</td></tr>
+          <tr><td><span class="dot dot-sol"></span>SOLVENT</td><td class="v-cur">${fmt(solTotal)}</td><td class="v-prev">${prevSol?fmt(prevSol):'—'}</td><td>${prevSol?diffVal(solTotal-prevSol):'—'}</td><td>${prevSol?diffBadge(solTotal-prevSol,calcPct(solTotal,prevSol)):'—'}</td></tr>
+          <tr class="total-row"><td>合計</td><td class="v-cur">${fmt(inkTotal+solTotal)}</td><td class="v-prev">${(prevInk+prevSol)?fmt(prevInk+prevSol):'—'}</td><td>${(prevInk+prevSol)?diffVal((inkTotal+solTotal)-(prevInk+prevSol)):'—'}</td><td>${(prevInk+prevSol)?diffBadge((inkTotal+solTotal)-(prevInk+prevSol),calcPct(inkTotal+solTotal,prevInk+prevSol)):'—'}</td></tr>
         </tbody>
       </table></div>
     </div>
     <div class="card">
+      <div class="card-header"><span class="card-title">當季比較 Q${curQ}（${qMonths.map(n=>MONTH_NAMES[n]).join('–')}）</span><span style="font-size:11px;color:var(--text-muted);">${y} vs ${prevY}</span></div>
+      <div class="q-months-grid">
+        ${qMonths.map(qm=>{
+          const cur=getQData(y,qm),prev=getQData(prevY,qm);
+          const isNA=y>now.getFullYear()||(y===now.getFullYear()&&qm>now.getMonth()+1);
+          const isCur=y===now.getFullYear()&&qm===now.getMonth()+1;
+          const statusLabel=isNA?'尚未開始':isCur?'進行中':'已結束';
+          function qRow(label,dotCls,curVal,prevVal){
+            const pct=(!isNA&&prevVal)?calcPct(curVal,prevVal):null;
+            const diff=curVal-prevVal;
+            return `<div class="q-row">
+              <span class="q-lbl">${dotCls?'<span class="dot '+dotCls+'"></span>':''} ${label}</span>
+              <div class="q-rvals">
+                <div class="q-cur">${isNA?'—':fmt(curVal)}</div>
+                <div class="q-prev">去年 ${prevVal?fmt(prevVal):'—'}</div>
+                <div class="q-badge">${isNA||!prevVal?'<span class="b-na">—</span>':diffBadge(diff,pct)}</div>
+              </div>
+            </div>`;
+          }
+          return `<div class="q-month-col">
+            <div class="q-month-hdr">${qm}月 <span>${statusLabel}</span></div>
+            ${qRow('INK','dot-ink',cur.ink,prev.ink)}
+            ${qRow('SOLVENT','dot-sol',cur.sol,prev.sol)}
+            ${qRow('合計','',cur.ink+cur.sol,prev.ink+prev.sol)}
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="q-season-total">
+        <div class="q-st-title">Q${curQ} 季度合計</div>
+        <div class="q-st-grid">
+          <div class="q-st-item">
+            <div class="q-st-lbl"><span class="dot dot-ink"></span>INK</div>
+            <div class="q-st-val">${fmt(qTot.ink)}</div>
+            <div class="q-st-diff">${qPrev.ink?diffBadge(qTot.ink-qPrev.ink,calcPct(qTot.ink,qPrev.ink)):'—'} <span class="q-st-prev">去年 ${qPrev.ink?fmt(qPrev.ink):'—'}</span></div>
+          </div>
+          <div class="q-st-item">
+            <div class="q-st-lbl"><span class="dot dot-sol"></span>SOLVENT</div>
+            <div class="q-st-val">${fmt(qTot.sol)}</div>
+            <div class="q-st-diff">${qPrev.sol?diffBadge(qTot.sol-qPrev.sol,calcPct(qTot.sol,qPrev.sol)):'—'} <span class="q-st-prev">去年 ${qPrev.sol?fmt(qPrev.sol):'—'}</span></div>
+          </div>
+          <div class="q-st-item">
+            <div class="q-st-lbl">合計</div>
+            <div class="q-st-val">${fmt(qTot.ink+qTot.sol)}</div>
+            <div class="q-st-diff">${(qPrev.ink+qPrev.sol)?diffBadge((qTot.ink+qTot.sol)-(qPrev.ink+qPrev.sol),calcPct(qTot.ink+qTot.sol,qPrev.ink+qPrev.sol)):'—'} <span class="q-st-prev">去年 ${(qPrev.ink+qPrev.sol)?fmt(qPrev.ink+qPrev.sol):'—'}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
       <div class="card-header"><span class="card-title">年度比較</span><span style="font-size:11px;color:var(--text-muted);">${y} vs ${prevY} 累計至 ${m} 月</span></div>
       <div class="tbl-wrap"><table class="cmp-table">
-        <thead><tr><th>項目</th><th>${y} 累計</th><th>${prevY} 同期</th><th>差異</th><th>成長率</th></tr></thead>
+        <thead><tr><th>項目</th><th>${y} 累計</th><th>${prevY} 同期</th><th>差異量</th><th>差異%</th></tr></thead>
         <tbody>
-          <tr><td>INK</td><td class="v-cur">${fmt(yearInk)}</td><td class="v-prev">${prevYearInk?fmt(prevYearInk):'—'}</td><td>${prevYearInk?diffVal(yearInk-prevYearInk):'—'}</td><td>${prevYearInk?diffBadge(yearInk-prevYearInk,calcPct(yearInk,prevYearInk)):'—'}</td></tr>
-          <tr><td>SOLVENT</td><td class="v-cur">${fmt(yearSol)}</td><td class="v-prev">${prevYearSol?fmt(prevYearSol):'—'}</td><td>${prevYearSol?diffVal(yearSol-prevYearSol):'—'}</td><td>${prevYearSol?diffBadge(yearSol-prevYearSol,calcPct(yearSol,prevYearSol)):'—'}</td></tr>
+          <tr><td><span class="dot dot-ink"></span>INK</td><td class="v-cur">${fmt(yearInk)}</td><td class="v-prev">${prevYearInk?fmt(prevYearInk):'—'}</td><td>${prevYearInk?diffVal(yearInk-prevYearInk):'—'}</td><td>${prevYearInk?diffBadge(yearInk-prevYearInk,calcPct(yearInk,prevYearInk)):'—'}</td></tr>
+          <tr><td><span class="dot dot-sol"></span>SOLVENT</td><td class="v-cur">${fmt(yearSol)}</td><td class="v-prev">${prevYearSol?fmt(prevYearSol):'—'}</td><td>${prevYearSol?diffVal(yearSol-prevYearSol):'—'}</td><td>${prevYearSol?diffBadge(yearSol-prevYearSol,calcPct(yearSol,prevYearSol)):'—'}</td></tr>
           <tr class="total-row"><td>合計</td><td class="v-cur">${fmt(yearInk+yearSol)}</td><td class="v-prev">${(prevYearInk+prevYearSol)?fmt(prevYearInk+prevYearSol):'—'}</td><td>${(prevYearInk+prevYearSol)?diffVal((yearInk+yearSol)-(prevYearInk+prevYearSol)):'—'}</td><td>${(prevYearInk+prevYearSol)?diffBadge((yearInk+yearSol)-(prevYearInk+prevYearSol),calcPct(yearInk+yearSol,prevYearInk+prevYearSol)):'—'}</td></tr>
         </tbody>
       </table></div>
