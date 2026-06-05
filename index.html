@@ -222,7 +222,17 @@
       .sat-item:last-child { border-bottom: none; }
       .field-row { grid-template-columns: 1fr; }
     }
+  /* 圖表區塊 */
+  .chart-box { border-top: 1px solid var(--border); padding: 1rem 1.25rem; background: var(--week-bg); }
+  .chart-title { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .chart-legend { display: flex; gap: 16px; margin-bottom: 10px; font-size: 11px; color: var(--text-muted); flex-wrap: wrap; }
+  .chart-legend .lg { display: flex; align-items: center; gap: 5px; }
+  .chart-legend .sw { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
+  .chart-canvas-wrap { position: relative; width: 100%; height: 230px; }
+  .chart-canvas-wrap.tall { height: 240px; }
+  @media (max-width: 600px) { .chart-canvas-wrap { height: 200px; } }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 </head>
 <body>
 <div class="container">
@@ -640,6 +650,13 @@ function renderDashboard() {
           <tr class="total-row"><td>合計</td><td class="v-cur">${fmt(inkTotal+solTotal)}</td><td class="v-prev">${(prevInk+prevSol)?fmt(prevInk+prevSol):'—'}</td><td>${(prevInk+prevSol)?diffVal((inkTotal+solTotal)-(prevInk+prevSol)):'—'}</td><td>${(prevInk+prevSol)?diffBadge((inkTotal+solTotal)-(prevInk+prevSol),calcPct(inkTotal+solTotal,prevInk+prevSol)):'—'}</td></tr>
         </tbody>
       </table></div>
+      <div class="chart-box">
+        <div class="chart-legend">
+          <span class="lg"><span class="sw" style="background:#185FA5"></span>今年</span>
+          <span class="lg"><span class="sw" style="background:transparent;border:1.5px solid #85B7EB"></span>去年同期</span>
+        </div>
+        <div class="chart-canvas-wrap"><canvas id="chartMonthCompare" role="img" aria-label="今年與去年同期的油墨、溶劑、合計出貨量比較長條圖"></canvas></div>
+      </div>
     </div>
     <div class="card">
       <div class="card-header"><span class="card-title">當季比較 Q${curQ}（${qMonths.map(n=>MONTH_NAMES[n]).join('–')}）</span><span style="font-size:11px;color:var(--text-muted);">${y} vs ${prevY}</span></div>
@@ -700,7 +717,64 @@ function renderDashboard() {
           <tr class="total-row"><td>合計</td><td class="v-cur">${fmt(yearInk+yearSol)}</td><td class="v-prev">${(prevYearInk+prevYearSol)?fmt(prevYearInk+prevYearSol):'—'}</td><td>${(prevYearInk+prevYearSol)?diffVal((yearInk+yearSol)-(prevYearInk+prevYearSol)):'—'}</td><td>${(prevYearInk+prevYearSol)?diffBadge((yearInk+yearSol)-(prevYearInk+prevYearSol),calcPct(yearInk+yearSol,prevYearInk+prevYearSol)):'—'}</td></tr>
         </tbody>
       </table></div>
+      <div class="chart-box">
+        <div class="chart-title"><span class="dot dot-ink"></span> INK 全年走勢（每月）</div>
+        <div class="chart-canvas-wrap tall"><canvas id="chartYearInk" role="img" aria-label="本年度各月油墨出貨量長條圖"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title"><span class="dot dot-sol"></span> SOLVENT 全年走勢（每月）</div>
+        <div class="chart-canvas-wrap tall"><canvas id="chartYearSol" role="img" aria-label="本年度各月溶劑出貨量長條圖"></canvas></div>
+      </div>
     </div>`;
+
+  // ── 繪製圖表：計算每月資料後繪製 ──
+  const monthsInk=[], monthsSol=[];
+  for(let mm=1; mm<=12; mm++){ const qd=getQData(y,mm); monthsInk.push(qd.ink); monthsSol.push(qd.sol); }
+  renderCharts(inkTotal, solTotal, prevInk, prevSol, monthsInk, monthsSol);
+}
+
+let _chartMC=null, _chartYI=null, _chartYS=null;
+function renderCharts(inkTotal, solTotal, prevInk, prevSol, monthsInk, monthsSol){
+  if(typeof Chart==='undefined') return;
+  const MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const fmtK=(v)=>Math.round(v/1000)+'k';
+  const tip={callbacks:{label:(c)=>c.dataset.label+': '+Math.round(c.parsed.y).toLocaleString()+' kg'}};
+
+  // A 圖：今年 vs 去年同期（INK / SOLVENT / 合計）
+  if(_chartMC) _chartMC.destroy();
+  const elMC=document.getElementById('chartMonthCompare');
+  if(elMC){
+    _chartMC=new Chart(elMC,{type:'bar',
+      data:{labels:['INK','SOLVENT','合計'],datasets:[
+        {label:'今年',data:[inkTotal,solTotal,inkTotal+solTotal],backgroundColor:['#185FA5','#1D9E75','#888780'],borderRadius:4,categoryPercentage:0.62,barPercentage:0.9},
+        {label:'去年同期',data:[prevInk,prevSol,prevInk+prevSol],backgroundColor:'rgba(0,0,0,0)',borderColor:['#85B7EB','#5DCAA5','#B4B2A9'],borderWidth:1.5,borderRadius:4,categoryPercentage:0.62,barPercentage:0.9}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:tip},
+        scales:{x:{grid:{display:false},ticks:{font:{size:12}}},y:{beginAtZero:true,ticks:{callback:(v)=>Math.round(v).toLocaleString(),font:{size:11}},grid:{color:'rgba(0,0,0,0.06)'}}}}
+    });
+  }
+
+  // C 圖之一：INK 全年 12 個月
+  if(_chartYI) _chartYI.destroy();
+  const elYI=document.getElementById('chartYearInk');
+  if(elYI){
+    _chartYI=new Chart(elYI,{type:'bar',
+      data:{labels:MONTHS,datasets:[{label:'INK',data:monthsInk,backgroundColor:'#185FA5',borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:tip},
+        scales:{x:{grid:{display:false},ticks:{font:{size:11},autoSkip:false}},y:{beginAtZero:true,ticks:{callback:fmtK,font:{size:11}},grid:{color:'rgba(0,0,0,0.06)'}}}}
+    });
+  }
+
+  // C 圖之二：SOLVENT 全年 12 個月
+  if(_chartYS) _chartYS.destroy();
+  const elYS=document.getElementById('chartYearSol');
+  if(elYS){
+    _chartYS=new Chart(elYS,{type:'bar',
+      data:{labels:MONTHS,datasets:[{label:'SOLVENT',data:monthsSol,backgroundColor:'#1D9E75',borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:tip},
+        scales:{x:{grid:{display:false},ticks:{font:{size:11},autoSkip:false}},y:{beginAtZero:true,ticks:{callback:fmtK,font:{size:11}},grid:{color:'rgba(0,0,0,0.06)'}}}}
+    });
+  }
 }
 
 function changeMonth(delta) {
@@ -752,19 +826,37 @@ function closeInputModal() { document.getElementById('input-modal').classList.re
 
 async function submitShipment() {
   const dateVal=document.getElementById('input-date').value;
-  const inkVal=document.getElementById('input-ink').value;
-  const solVal=document.getElementById('input-sol').value;
+  const inkVal=document.getElementById('input-ink').value.trim();
+  const solVal=document.getElementById('input-sol').value.trim();
   const note=document.getElementById('input-note').value;
   const warn=document.getElementById('input-warning');
 
   if(!dateVal){warn.style.display='block';warn.textContent='請選擇日期';return;}
-  if(!inkVal&&!solVal){warn.style.display='block';warn.textContent='請輸入 INK 或 SOLVENT 的出貨量';return;}
 
   const parts=dateVal.split('-');
   const dateStr=`${parts[0]}/${parts[1]}/${parts[2]}`;
+
+  // 框內若有填，轉成數字；空白則為 null（代表「沒輸入」）
+  const inkNum = inkVal==='' ? null : Number(inkVal);
+  const solNum = solVal==='' ? null : Number(solVal);
+
+  // 數字格式檢查（避免送出非數字或負數）
+  if(inkNum!==null && (isNaN(inkNum)||inkNum<0)){warn.style.display='block';warn.textContent='⚠️ INK 請輸入有效數字';return;}
+  if(solNum!==null && (isNaN(solNum)||solNum<0)){warn.style.display='block';warn.textContent='⚠️ SOLVENT 請輸入有效數字';return;}
+
+  // 讀取那天原本已有的數量，用來判斷是否在「清空既有資料」
+  const existInk = getShipment(dateStr, 'INK');     // 數字，沒有則為 0
+  const existSol = getShipment(dateStr, 'SOLVENT');
+
   const rows=[];
-  if(inkVal&&Number(inkVal)>0) rows.push({date:dateStr,type:'INK',qty:Number(inkVal),note});
-  if(solVal&&Number(solVal)>0) rows.push({date:dateStr,type:'SOLVENT',qty:Number(solVal),note});
+  // 有填數字（含 0）→ 直接送出覆蓋；框內空白但原本有資料 → 送 0 把它清掉；原本就沒有 → 不動
+  if(inkNum!==null) rows.push({date:dateStr,type:'INK',qty:inkNum,note});
+  else if(existInk>0) rows.push({date:dateStr,type:'INK',qty:0,note});
+
+  if(solNum!==null) rows.push({date:dateStr,type:'SOLVENT',qty:solNum,note});
+  else if(existSol>0) rows.push({date:dateStr,type:'SOLVENT',qty:0,note});
+
+  if(rows.length===0){warn.style.display='block';warn.textContent='請輸入 INK 或 SOLVENT 的出貨量';return;}
 
   const btn=document.getElementById('btn-submit');
   btn.disabled=true; btn.textContent='送出中...';
